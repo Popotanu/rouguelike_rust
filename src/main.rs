@@ -1,7 +1,10 @@
 use rltk::{render_draw_buffer, GameState, Rltk, VirtualKeyCode, RGB};
 use specs::prelude::*;
 use specs_derive::Component;
-use std::cmp::{max, min};
+use std::{
+    arch::x86_64::_SIDD_LEAST_SIGNIFICANT,
+    cmp::{max, min},
+};
 
 #[derive(Component)]
 struct Position {
@@ -23,12 +26,43 @@ impl GameState for State {
     fn tick(&mut self, ctx: &mut Rltk) {
         ctx.cls();
 
+        self.run_systems();
         let positions = self.ecs.read_storage::<Position>();
         let renderables = self.ecs.read_storage::<Renderable>();
 
         for (pos, render) in (&positions, &renderables).join() {
             ctx.set(pos.x, pos.y, render.fg, render.bg, render.glyph);
         }
+    }
+}
+
+#[derive(Component)]
+struct LeftMover {}
+
+struct LeftWalker {}
+// ECSシステム`が`関数を呼び出している
+impl<'a> System<'a> for LeftWalker {
+    // Systemが必要とするものを伝えるための型を定義
+    type SystemData = (ReadStorage<'a, LeftMover>, WriteStorage<'a, Position>);
+    fn run(&mut self, (lefty, mut pos): Self::SystemData) {
+        // _つけるとその変数を使用しないことをコンパイラに伝える.
+        // コンパイラに怒られなくなる
+        for (_lefty, pos) in (&lefty, &mut pos).join() {
+            pos.x -= 1;
+            if pos.x < 0 {
+                pos.x = 79;
+            }
+        }
+    }
+}
+
+impl State {
+    fn run_systems(&mut self) {
+        let mut lw = LeftWalker {};
+        // システムを実行する,
+        lw.run_now(&self.ecs);
+        // システムにより何らかの変更がqueueに入れられたら,即座に世界に適用する
+        self.ecs.maintain();
     }
 }
 fn main() -> rltk::BError {
@@ -40,6 +74,7 @@ fn main() -> rltk::BError {
     let mut gs = State { ecs: World::new() };
     gs.ecs.register::<Position>();
     gs.ecs.register::<Renderable>();
+    gs.ecs.register::<LeftMover>();
 
     gs.ecs
         .create_entity()
@@ -61,7 +96,9 @@ fn main() -> rltk::BError {
                 fg: RGB::named(rltk::RED),
                 bg: RGB::named(rltk::BLACK),
             })
+            .with(LeftMover {})
             .build();
     }
+
     rltk::main_loop(context, gs)
 }
