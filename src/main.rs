@@ -1,4 +1,4 @@
-use rltk::{GameState, Rltk, VirtualKeyCode, RGB};
+use rltk::{render_draw_buffer, GameState, Rltk, VirtualKeyCode, RGB};
 use specs::prelude::*;
 use specs_derive::Component;
 use std::cmp::{max, min};
@@ -34,5 +34,28 @@ fn main() -> rltk::BError {
     let mut gs = State { ecs: World::new() };
     gs.ecs.register::<Position>();
     gs.ecs.register::<Renderable>();
+
+    gs.ecs
+        .create_entity()
+        .with(Position { x: 40, y: 25 })
+        .with(Renderable {
+            glyph: rltk::to_cp437('@'),
+            fg: RGB::named(rltk::YELLOW),
+            bg: RGB::named(rltk::BLACK),
+        })
+        .build();
+
+    for i in 0..10 {
+        gs.ecs
+            .create_entity()
+            .with(Position { x: i * 7, y: 20 })
+            .with(Renderable {
+                // cp437: Unicode->DOS/CP437
+                glyph: rltk::to_cp437('☺'),
+                fg: RGB::named(rltk::RED),
+                bg: RGB::named(rltk::BLACK),
+            })
+            .build();
+    }
     rltk::main_loop(context, gs)
 }
