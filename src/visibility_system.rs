@@ -1,12 +1,26 @@
-use super::{Position, Viewshed};
+use super::{Map, Position, Viewshed};
+use rltk::{field_of_view, Point};
 use specs::prelude::*;
 
 pub struct VisibilitySystem {}
 
 impl<'a> System<'a> for VisibilitySystem {
-    type SystemData = (WriteStorage<'a, Viewshed>, WriteStorage<'a, Position>);
+    type SystemData = (
+        ReadExpect<'a, Map>,
+        WriteStorage<'a, Viewshed>,
+        WriteStorage<'a, Position>,
+    );
 
-    fn run(&mut self, (mut viewshed, pos): Self::SystemData) {
-        for (viewshed, pos) in (&mut viewshed, &pos).join() {}
+    fn run(&mut self, data: Self::SystemData) {
+        let (map, mut viewshed, pos) = data;
+
+        for (viewshed, pos) in (&mut viewshed, &pos).join() {
+            viewshed.visible_tiles.clear();
+            viewshed.visible_tiles = field_of_view(Point::new(pos.x, pos.y), viewshed.range, &*map);
+            viewshed
+                .visible_tiles
+                // 条件を満たす要素だけ残す.JSのfilterのようなものだけど破壊的.元の配列を変更する.
+                .retain(|p| p.x >= 0 && p.x < map.width && p.y >= 0 && p.y < map.height);
+        }
     }
 }
