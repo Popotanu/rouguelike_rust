@@ -22,4 +22,8 @@ pub struct Player {}
 pub struct Viewshed {
     pub visible_tiles: Vec<rltk::Point>,
     pub range: i32,
+    // dirtyふらぐ
+    // trueのときだけviewshedを再計算する.
+    // 再計算したらfalseにする
+    pub dirty: bool,
 }
