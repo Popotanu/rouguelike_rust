@@ -146,7 +146,7 @@ pub fn draw_map(map: &[TileType], ctx: &mut Rltk) {
                 ctx.set(
                     x,
                     y,
-                    RGB::from_f32(0.0, 0.6, 0.2),
+                    RGB::from_f32(0.0, 0.7, 0.2),
                     RGB::from_f32(0., 0., 0.),
                     rltk::to_cp437('#'),
                 );
