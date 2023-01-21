@@ -1,16 +1,18 @@
 use rltk::{GameState, Rltk, Tile, RGB};
 use specs::prelude::*;
 
+// ルートファイル(このプロジェクトではmain.rs)内で読み込むファイルを書かないといけない
+// main.rsで使わなくても書かないと,そのプロジェクトには存在しないファイルってことになっちゃう
 mod components;
 pub use components::*;
 mod map;
 pub use map::*;
 mod player;
 pub use player::*;
-// このプロジェクトのルートファイルはmain.rs
-// だからここでrectを読み込まないといけない(main.rsで使わなくても)
 mod rect;
 pub use rect::Rect;
+mod visibility_system;
+use visibility_system::VisibilitySystem;
 
 pub struct State {
     ecs: World,
@@ -18,6 +20,8 @@ pub struct State {
 
 impl State {
     fn run_systems(&mut self) {
+        let mut vis = VisibilitySystem {};
+        vis.run_now(&self.ecs);
         // システムにより何らかの変更がqueueに入れられたら,即座に世界に適用する
         self.ecs.maintain();
     }
@@ -51,6 +55,7 @@ fn main() -> rltk::BError {
     gs.ecs.register::<Position>();
     gs.ecs.register::<Renderable>();
     gs.ecs.register::<Player>();
+    gs.ecs.register::<Viewshed>();
 
     let map: Map = Map::new_map_rooms_and_corridors();
     let (player_x, player_y) = map.rooms[0].center();
@@ -70,6 +75,10 @@ fn main() -> rltk::BError {
             bg: RGB::named(rltk::BLACK),
         })
         .with(Player {})
+        .with(Viewshed {
+            visible_tiles: Vec::new(),
+            range: 8,
+        })
         .build();
 
     rltk::main_loop(context, gs)
