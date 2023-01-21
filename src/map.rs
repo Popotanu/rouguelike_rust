@@ -1,3 +1,4 @@
+use super::Rect;
 use rltk::{RandomNumberGenerator, Rltk, RGB};
 use std::cmp::{max, min};
 
@@ -10,7 +11,10 @@ pub fn xy_idx(x: i32, y: i32) -> usize {
     (y as usize * 80) + x as usize
 }
 
-pub fn new_map() -> Vec<TileType> {
+// rustで ///を使うと関数コメントになる.IDEのサポートを受けられる
+/// ランダムに配置された400この壁を持つmapを生成する
+/// 見栄えが悪い.良いmapだとはいえない
+pub fn new_map_test() -> Vec<TileType> {
     let mut map = vec![TileType::Floor; 80 * 50];
 
     // 壁との境界をつくる
@@ -40,6 +44,27 @@ pub fn new_map() -> Vec<TileType> {
     map
 }
 
+// 部屋を作る. 与えられたrectのタイルをすべて床にする
+fn apply_room_to_map(room: &Rect, map: &mut [TileType]) {
+    for y in room.y1 + 1..=room.y2 {
+        for x in room.x1 + 1..=room.x2 {
+            map[xy_idx(x, y)] = TileType::Floor;
+        }
+    }
+}
+
+pub fn new_map_rooms_and_corridors() -> Vec<TileType> {
+    let mut map = vec![TileType::Wall; 80 * 50];
+
+    let room1 = Rect::new(20, 15, 10, 15);
+    let room2 = Rect::new(35, 15, 30, 10);
+
+    apply_room_to_map(&room1, &mut map);
+    apply_room_to_map(&room2, &mut map);
+
+    map
+}
+
 // TileTypeのスライスを足す
 pub fn draw_map(map: &[TileType], ctx: &mut Rltk) {
     let mut y = 0;
@@ -60,7 +85,7 @@ pub fn draw_map(map: &[TileType], ctx: &mut Rltk) {
                 ctx.set(
                     x,
                     y,
-                    RGB::from_f32(0.0, 0.8, 0.0),
+                    RGB::from_f32(0.0, 0.5, 0.2),
                     RGB::from_f32(0., 0., 0.),
                     rltk::to_cp437('#'),
                 );
