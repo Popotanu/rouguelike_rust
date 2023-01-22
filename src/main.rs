@@ -34,14 +34,17 @@ impl GameState for State {
         player_input(self, ctx);
         self.run_systems();
 
-        let map = self.ecs.fetch::<Map>();
         draw_map(&self.ecs, ctx);
 
         let positions = self.ecs.read_storage::<Position>();
         let renderables = self.ecs.read_storage::<Renderable>();
+        let map = self.ecs.fetch::<Map>();
 
         for (pos, render) in (&positions, &renderables).join() {
-            ctx.set(pos.x, pos.y, render.fg, render.bg, render.glyph);
+            let idx = map.xy_idx(pos.x, pos.y);
+            if map.visible_tiles[idx] {
+                ctx.set(pos.x, pos.y, render.fg, render.bg, render.glyph)
+            }
         }
     }
 }
@@ -60,15 +63,23 @@ fn main() -> rltk::BError {
     let map: Map = Map::new_map_rooms_and_corridors();
     let (player_x, player_y) = map.rooms[0].center();
 
+    let mut rng = rltk::RandomNumberGenerator::new();
     // skip(1) で最初の部屋にはmob配置しないようにする
     // playerが配置されるから
     for room in map.rooms.iter().skip(1) {
         let (x, y) = room.center();
+
+        let glyph: rltk::FontCharType;
+        let roll = rng.roll_dice(1, 2);
+        match roll {
+            1 => glyph = rltk::to_cp437('g'), // goblin
+            _ => glyph = rltk::to_cp437('o'), // orc
+        }
         gs.ecs
             .create_entity()
             .with(Position { x, y })
             .with(Renderable {
-                glyph: rltk::to_cp437('g'),
+                glyph: glyph,
                 fg: RGB::named(rltk::RED),
                 bg: RGB::named(rltk::BLACK),
             })
