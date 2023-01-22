@@ -1,4 +1,4 @@
-use rltk::{GameState, Point, Rltk, Tile, RGB};
+use rltk::{GameState, Point, Rltk, RGB};
 use specs::prelude::*;
 
 // ルートファイル(このプロジェクトではmain.rs)内で読み込むファイルを書かないといけない
@@ -81,22 +81,32 @@ fn main() -> rltk::BError {
     gs.ecs.register::<Player>();
     gs.ecs.register::<Monster>();
     gs.ecs.register::<Viewshed>();
+    gs.ecs.register::<Name>();
 
     let map: Map = Map::new_map_rooms_and_corridors();
     let (player_x, player_y) = map.rooms[0].center();
 
+    // Mobをつくる
     let mut rng = rltk::RandomNumberGenerator::new();
     // skip(1) で最初の部屋にはmob配置しないようにする
     // playerが配置されるから
-    for room in map.rooms.iter().skip(1) {
+    for (i, room) in map.rooms.iter().skip(1).enumerate() {
         let (x, y) = room.center();
 
         let glyph: rltk::FontCharType;
+        let name: String;
         let roll = rng.roll_dice(1, 2);
         match roll {
-            1 => glyph = rltk::to_cp437('g'), // goblin
-            _ => glyph = rltk::to_cp437('o'), // orc
+            1 => {
+                glyph = rltk::to_cp437('g');
+                name = "Goblin".to_string();
+            }
+            _ => {
+                glyph = rltk::to_cp437('o');
+                name = "Orc".to_string();
+            }
         }
+
         gs.ecs
             .create_entity()
             .with(Position { x, y })
@@ -111,13 +121,14 @@ fn main() -> rltk::BError {
                 dirty: true,
             })
             .with(Monster {})
+            .with(Name {
+                name: format!("{} #{}", &name, i),
+            })
             .build();
     }
-    gs.ecs.insert(map);
-    // ecsのsystemにplayerの居場所を伝える
-    gs.ecs.insert(Point::new(player_x, player_y));
 
-    // プレイヤーの初期位置を部屋の真ん中にする
+    // playerをつくる
+    // 初期位置を部屋の真ん中にする
     gs.ecs
         .create_entity()
         .with(Position {
@@ -135,7 +146,13 @@ fn main() -> rltk::BError {
             range: 8,
             dirty: true,
         })
+        .with(Name {
+            name: "Pon".to_string(),
+        })
         .build();
 
+    gs.ecs.insert(map);
+    // ecsのsystemにplayerの居場所を伝える
+    gs.ecs.insert(Point::new(player_x, player_y));
     rltk::main_loop(context, gs)
 }
