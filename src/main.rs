@@ -1,4 +1,4 @@
-use rltk::{GameState, Rltk, Tile, RGB};
+use rltk::{GameState, Point, Rltk, Tile, RGB};
 use specs::prelude::*;
 
 // ルートファイル(このプロジェクトではmain.rs)内で読み込むファイルを書かないといけない
@@ -114,6 +114,8 @@ fn main() -> rltk::BError {
             .build();
     }
     gs.ecs.insert(map);
+    // ecsのsystemにplayerの居場所を伝える
+    gs.ecs.insert(Point::new(player_x, player_y));
 
     // プレイヤーの初期位置を部屋の真ん中にする
     gs.ecs
