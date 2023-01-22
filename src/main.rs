@@ -1,4 +1,4 @@
-use rltk::{GameState, Rltk, Tile, RGB};
+use rltk::{GameState, Point, Rltk, RGB};
 use specs::prelude::*;
 
 // ルートファイル(このプロジェクトではmain.rs)内で読み込むファイルを書かないといけない
@@ -13,15 +13,27 @@ mod rect;
 pub use rect::Rect;
 mod visibility_system;
 use visibility_system::VisibilitySystem;
+mod monster_ai_system;
+use monster_ai_system::MonsterAI;
 
+// 待ち状態(相手のターン) or 自分のターン
+#[derive(PartialEq, Copy, Clone)]
+pub enum RunState {
+    Paused,
+    Running,
+}
 pub struct State {
     ecs: World,
+    runstate: RunState,
 }
 
 impl State {
     fn run_systems(&mut self) {
         let mut vis = VisibilitySystem {};
         vis.run_now(&self.ecs);
+        let mut mob = MonsterAI {};
+        mob.run_now(&self.ecs);
+
         // システムにより何らかの変更がqueueに入れられたら,即座に世界に適用する
         self.ecs.maintain();
     }
@@ -31,17 +43,26 @@ impl GameState for State {
     fn tick(&mut self, ctx: &mut Rltk) {
         ctx.cls();
 
-        player_input(self, ctx);
-        self.run_systems();
+        if self.runstate == RunState::Running {
+            // Mobのターン
+            self.run_systems();
+            self.runstate = RunState::Paused;
+        } else {
+            // playerのターン
+            self.runstate = player_input(self, ctx);
+        }
 
-        let map = self.ecs.fetch::<Map>();
         draw_map(&self.ecs, ctx);
 
         let positions = self.ecs.read_storage::<Position>();
         let renderables = self.ecs.read_storage::<Renderable>();
+        let map = self.ecs.fetch::<Map>();
 
         for (pos, render) in (&positions, &renderables).join() {
-            ctx.set(pos.x, pos.y, render.fg, render.bg, render.glyph);
+            let idx = map.xy_idx(pos.x, pos.y);
+            if map.visible_tiles[idx] {
+                ctx.set(pos.x, pos.y, render.fg, render.bg, render.glyph)
+            }
         }
     }
 }
@@ -51,18 +72,63 @@ fn main() -> rltk::BError {
     let context = RltkBuilder::simple80x50()
         .with_title("風来のたぬぽん")
         .build()?;
-    let mut gs = State { ecs: World::new() };
+    let mut gs = State {
+        ecs: World::new(),
+        runstate: RunState::Running,
+    };
     gs.ecs.register::<Position>();
     gs.ecs.register::<Renderable>();
     gs.ecs.register::<Player>();
+    gs.ecs.register::<Monster>();
     gs.ecs.register::<Viewshed>();
+    gs.ecs.register::<Name>();
 
     let map: Map = Map::new_map_rooms_and_corridors();
     let (player_x, player_y) = map.rooms[0].center();
-    gs.ecs.insert(map);
 
-    // プレイヤーの初期位置を部屋の真ん中にする
+    // Mobをつくる
+    let mut rng = rltk::RandomNumberGenerator::new();
+    // skip(1) で最初の部屋にはmob配置しないようにする
+    // playerが配置されるから
+    for (i, room) in map.rooms.iter().skip(1).enumerate() {
+        let (x, y) = room.center();
 
+        let glyph: rltk::FontCharType;
+        let name: String;
+        let roll = rng.roll_dice(1, 2);
+        match roll {
+            1 => {
+                glyph = rltk::to_cp437('g');
+                name = "Goblin".to_string();
+            }
+            _ => {
+                glyph = rltk::to_cp437('o');
+                name = "Orc".to_string();
+            }
+        }
+
+        gs.ecs
+            .create_entity()
+            .with(Position { x, y })
+            .with(Renderable {
+                glyph: glyph,
+                fg: RGB::named(rltk::RED),
+                bg: RGB::named(rltk::BLACK),
+            })
+            .with(Viewshed {
+                visible_tiles: Vec::new(),
+                range: 8,
+                dirty: true,
+            })
+            .with(Monster {})
+            .with(Name {
+                name: format!("{} #{}", &name, i),
+            })
+            .build();
+    }
+
+    // playerをつくる
+    // 初期位置を部屋の真ん中にする
     gs.ecs
         .create_entity()
         .with(Position {
@@ -80,7 +146,13 @@ fn main() -> rltk::BError {
             range: 8,
             dirty: true,
         })
+        .with(Name {
+            name: "Pon".to_string(),
+        })
         .build();
 
+    gs.ecs.insert(map);
+    // ecsのsystemにplayerの居場所を伝える
+    gs.ecs.insert(Point::new(player_x, player_y));
     rltk::main_loop(context, gs)
 }
