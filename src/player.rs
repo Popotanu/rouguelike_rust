@@ -1,6 +1,6 @@
 use crate::Viewshed;
 
-use super::{Map, Player, Position, State, TileType};
+use super::{Map, Player, Position, RunState, State, TileType};
 use rltk::{Rltk, VirtualKeyCode};
 use specs::prelude::*;
 use std::cmp::{max, min};
@@ -23,12 +23,12 @@ pub fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut World) {
     }
 }
 
-pub fn player_input(gs: &mut State, ctx: &mut Rltk) {
+pub fn player_input(gs: &mut State, ctx: &mut Rltk) -> RunState {
     // player movement
     match ctx.key {
         // ctx.keyがなにもないとき(何も押されてないとき)にNoneにマッチする
         // このとき,何も返さない.何も起こらない
-        None => {}
+        None => return RunState::Paused, // pausedなのはMobのほう
         Some(key) => match key {
             VirtualKeyCode::Left | VirtualKeyCode::Numpad4 | VirtualKeyCode::H => {
                 try_move_player(-1, 0, &mut gs.ecs)
@@ -46,7 +46,8 @@ pub fn player_input(gs: &mut State, ctx: &mut Rltk) {
                 try_move_player(0, 1, &mut gs.ecs)
             }
 
-            _ => {} // default
+            _ => return RunState::Paused, // default
         },
     }
+    RunState::Running
 }
