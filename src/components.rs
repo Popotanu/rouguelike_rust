@@ -35,3 +35,6 @@ pub struct Viewshed {
     // 再計算したらfalseにする
     pub dirty: bool,
 }
+
+#[derive(Component, Debug)]
+pub struct BlocksTile {}
