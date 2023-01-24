@@ -23,9 +23,16 @@ impl<'a> System<'a> for MonsterAI {
         {
             // monsterがplayerを視界に捉えたら追いかける
             if viewshed.visible_tiles.contains(&*player_pos) {
-                // console::logはrltkのhelper.
-                // compile先が通常のプログラムかWASMか判別して出力する
-                console::log(&format!("{} shouts insults!", name.name));
+                let distance =
+                    rltk::DistanceAlg::Pythagoras.distance2d(Point::new(pos.x, pos.y), *player_pos);
+
+                // monsterのターンでplayerに隣り合ってれば攻撃したい
+                if distance < 1.5 {
+                    // console::logはrltkのhelper.
+                    // compile先が通常のプログラムかWASMか判別して出力する
+                    console::log(&format!("{} shouts insults!", name.name));
+                    return;
+                }
 
                 // A*アルゴリズムで経路探索をする
                 // monsterからplayerの経路
