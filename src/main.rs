@@ -21,6 +21,8 @@ mod melee_combat_system;
 use melee_combat_system::MeleeCombatSystem;
 mod damage_system;
 use damage_system::DamageSystem;
+mod gui;
+use gui::*;
 
 // 待ち状態(相手のターン) or 自分のターン
 #[derive(PartialEq, Copy, Clone, Debug)]
@@ -99,6 +101,8 @@ impl GameState for State {
                 ctx.set(pos.x, pos.y, render.fg, render.bg, render.glyph)
             }
         }
+
+        draw_ui(&self.ecs, ctx);
     }
 }
 
