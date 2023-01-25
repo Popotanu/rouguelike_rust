@@ -154,7 +154,8 @@ fn main() -> rltk::BError {
 
     // playerをつくる
     // 初期位置を部屋の真ん中にする
-    gs.ecs
+    let player_entity = gs
+        .ecs
         .create_entity()
         .with(Position {
             x: player_x,
@@ -185,5 +186,8 @@ fn main() -> rltk::BError {
     gs.ecs.insert(map);
     // ecsのsystemにplayerの居場所を伝える
     gs.ecs.insert(Point::new(player_x, player_y));
+    // plyaerのentityをecsに登録して,かんたんに参照できるようにする
+    gs.ecs.insert(player_entity);
+
     rltk::main_loop(context, gs)
 }
