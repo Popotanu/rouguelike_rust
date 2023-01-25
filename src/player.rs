@@ -1,7 +1,7 @@
 use crate::{CombatStats, Viewshed, WantsToMelee};
 
-use super::{Map, Player, Point, Position, RunState, State, TileType};
-use rltk::{console, Rltk, VirtualKeyCode};
+use super::{Map, Player, Point, Position, RunState, State};
+use rltk::{Rltk, VirtualKeyCode};
 use specs::prelude::*;
 use std::cmp::{max, min};
 
@@ -63,8 +63,8 @@ pub fn player_input(gs: &mut State, ctx: &mut Rltk) -> RunState {
     // player movement
     match ctx.key {
         // ctx.keyがなにもないとき(何も押されてないとき)にNoneにマッチする
-        // このとき,何も返さない.何も起こらない
-        None => return RunState::Paused, // pausedなのはMobのほう
+        // このとき何も起こらない. 再度playerのターンにする
+        None => return RunState::AwaitingInput,
         Some(key) => match key {
             // 上下左右
             VirtualKeyCode::Left | VirtualKeyCode::Numpad4 | VirtualKeyCode::H => {
@@ -89,8 +89,9 @@ pub fn player_input(gs: &mut State, ctx: &mut Rltk) -> RunState {
             VirtualKeyCode::Numpad3 | VirtualKeyCode::M => try_move_player(1, 1, &mut gs.ecs),
             VirtualKeyCode::Numpad1 | VirtualKeyCode::N => try_move_player(-1, 1, &mut gs.ecs),
 
-            _ => return RunState::Paused, // default
+            // 無効なキーが押されたときは入力を捨てて再度playerのターンにする
+            _ => return RunState::AwaitingInput,
         },
     }
-    RunState::Running
+    RunState::MonsterTurn
 }
