@@ -37,7 +37,7 @@ pub fn draw_ui(ecs: &World, ctx: &mut Rltk) {
 
     let log = ecs.fetch::<GameLog>();
     let mut y = 44;
-    for s in log.entities.iter() {
+    for s in log.entries.iter() {
         if y < 49 {
             ctx.print(2, y, s);
         }

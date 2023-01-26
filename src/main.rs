@@ -126,7 +126,7 @@ fn main() -> rltk::BError {
     gs.ecs.register::<WantsToMelee>();
     gs.ecs.insert(RunState::PreRun);
     gs.ecs.insert(gamelog::GameLog {
-        entities: vec!["Welcome to Rusty Roguelike".to_string()],
+        entries: vec!["Welcome to Rusty Roguelike".to_string()],
     });
 
     let map: Map = Map::new_map_rooms_and_corridors();
