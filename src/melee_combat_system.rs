@@ -33,8 +33,8 @@ impl<'a> System<'a> for MeleeCombatSystem {
                         ));
                     } else {
                         log.entries.push(format!(
-                            "{} hits {}, for {} hp.",
-                            &name.name, &target_name.name, damage
+                            "{} did {} damage to {}.",
+                            &name.name, damage, &target_name.name
                         ));
                         SufferDamage::new_damage(&mut inflict_damage, wants_melee.target, damage);
                     }
