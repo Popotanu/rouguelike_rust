@@ -24,7 +24,7 @@ use damage_system::DamageSystem;
 mod gui;
 use gui::*;
 mod gamelog;
-use gamelog::GameLog;
+
 
 // 待ち状態(相手のターン) or 自分のターン
 #[derive(PartialEq, Copy, Clone, Debug)]
