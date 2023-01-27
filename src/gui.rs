@@ -1,5 +1,5 @@
-use super::{CombatStats, GameLog, Map, Name, Player, Position};
-use rltk::{Console, Point, Rltk, RGB};
+use super::{gamelog::GameLog, CombatStats, Map, Name, Player, Position};
+use rltk::{Point, Rltk, RGB};
 use specs::prelude::*;
 
 pub fn draw_ui(ecs: &World, ctx: &mut Rltk) {
@@ -37,7 +37,7 @@ pub fn draw_ui(ecs: &World, ctx: &mut Rltk) {
 
     let log = ecs.fetch::<GameLog>();
     let mut y = 44;
-    for s in log.entries.iter() {
+    for s in log.entries.iter().rev() {
         if y < 49 {
             ctx.print(2, y, s);
         }
