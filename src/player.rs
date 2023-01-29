@@ -93,6 +93,8 @@ pub fn player_input(gs: &mut State, ctx: &mut Rltk) -> RunState {
             // get an item
             VirtualKeyCode::G => get_item(&mut gs.ecs),
 
+            VirtualKeyCode::I => return RunState::ShowInventory,
+
             // 無効なキーが押されたときは入力を捨てて再度playerのターンにする
             _ => return RunState::AwaitingInput,
         },
