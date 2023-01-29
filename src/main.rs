@@ -24,7 +24,9 @@ use damage_system::DamageSystem;
 mod gui;
 use gui::*;
 mod gamelog;
+mod inventory_system;
 mod spawner;
+use inventory_system::ItemCollectionSystem;
 
 // 待ち状態(相手のターン) or 自分のターン
 #[derive(PartialEq, Copy, Clone, Debug)]
@@ -50,6 +52,8 @@ impl State {
         melee_combat.run_now(&self.ecs);
         let mut damage_system = DamageSystem {};
         damage_system.run_now(&self.ecs);
+        let mut pickup_system = ItemCollectionSystem {};
+        pickup_system.run_now(&self.ecs);
 
         // システムにより何らかの変更がqueueに入れられたら,即座に世界に適用する
         self.ecs.maintain();
@@ -132,6 +136,7 @@ fn main() -> rltk::BError {
     });
     gs.ecs.register::<Item>();
     gs.ecs.register::<Potion>();
+    gs.ecs.register::<InBackpack>();
 
     let map: Map = Map::new_map_rooms_and_corridors();
     let (player_x, player_y) = map.rooms[0].center();
