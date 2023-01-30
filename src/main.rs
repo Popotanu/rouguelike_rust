@@ -76,6 +76,9 @@ impl GameState for State {
         match newrunstate {
             RunState::PreRun => {
                 self.run_systems();
+                // itemを使ったら実際にシステムから削除する
+                // 使ったことをマークするだけじゃなくて実際に削除するためにmaintain()を実行することが必要
+                self.ecs.maintain();
                 newrunstate = RunState::AwaitingInput;
             }
             RunState::AwaitingInput => {
@@ -83,10 +86,12 @@ impl GameState for State {
             }
             RunState::PlayerTurn => {
                 self.run_systems();
+                self.ecs.maintain();
                 newrunstate = RunState::MonsterTurn;
             }
             RunState::MonsterTurn => {
                 self.run_systems();
+                self.ecs.maintain();
                 newrunstate = RunState::AwaitingInput;
             }
             RunState::ShowInventory => {
@@ -96,13 +101,16 @@ impl GameState for State {
                     gui::ItemMenuResult::NoResponse => {}
                     gui::ItemMenuResult::Selected => {
                         let item_entity = result.1.unwrap();
-                        let names = self.ecs.read_storage::<Name>();
-                        let mut gamelog = self.ecs.fetch_mut::<gamelog::GameLog>();
-                        gamelog.entries.push(format!(
-                            "You try to use {}, but it isn't written yet",
-                            names.get(item_entity).unwrap().name
-                        ));
-                        newrunstate = RunState::AwaitingInput;
+                        let mut intent = self.ecs.write_storage::<WantsToDrinkPortion>();
+                        intent
+                            .insert(
+                                *self.ecs.fetch::<Entity>(),
+                                WantsToDrinkPortion {
+                                    potion: item_entity,
+                                },
+                            )
+                            .expect("Uneable to insert intent");
+                        newrunstate = RunState::PlayerTurn;
                     }
                 }
             }
