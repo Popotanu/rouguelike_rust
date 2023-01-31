@@ -72,6 +72,8 @@ impl GameState for State {
             newrunstate = *runstate;
         }
 
+        draw_map(&self.ecs, ctx);
+
         // 今のターンに応じてゲームを動かして次のターンに遷移する
         match newrunstate {
             RunState::PreRun => {
@@ -122,8 +124,6 @@ impl GameState for State {
             // scope使うことでここでrunwriterをDropしてる
         }
         damage_system::delete_the_dead(&mut self.ecs);
-
-        draw_map(&self.ecs, ctx);
 
         let positions = self.ecs.read_storage::<Position>();
         let renderables = self.ecs.read_storage::<Renderable>();
