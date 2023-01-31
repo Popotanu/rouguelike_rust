@@ -95,6 +95,8 @@ pub fn player_input(gs: &mut State, ctx: &mut Rltk) -> RunState {
 
             VirtualKeyCode::I => return RunState::ShowInventory,
 
+            VirtualKeyCode::D => return RunState::ShowDrpoItem,
+
             // 無効なキーが押されたときは入力を捨てて再度playerのターンにする
             _ => return RunState::AwaitingInput,
         },

@@ -94,3 +94,9 @@ pub struct WantsToPickupItem {
 pub struct WantsToDrinkPortion {
     pub potion: Entity,
 }
+
+#[derive(Component, Debug, Clone)]
+
+pub struct WantsToDropItem {
+    pub item: Entity,
+}
