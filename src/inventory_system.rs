@@ -1,4 +1,4 @@
-use crate::player;
+use crate::{player, WantsToDropItem};
 
 use super::{
     gamelog::GameLog, CombatStats, InBackpack, Name, Position, Potion, WantsToDrinkPortion,
@@ -100,7 +100,7 @@ impl<'a> System<'a> for ItemDropSystem {
         ReadExpect<'a, Entity>,
         WriteExpect<'a, GameLog>,
         Entities<'a>,
-        WriteStorage<'a, WantsToPickupItem>,
+        WriteStorage<'a, WantsToDropItem>,
         ReadStorage<'a, Name>,
         WriteStorage<'a, Position>,
         WriteStorage<'a, InBackpack>,
