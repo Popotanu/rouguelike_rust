@@ -4,7 +4,6 @@ use super::{
 };
 use rltk::{Rltk, VirtualKeyCode};
 use specs::prelude::*;
-use std::cmp::{max, min};
 
 pub fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut World) {
     let mut positions = ecs.write_storage::<Position>();
@@ -47,8 +46,8 @@ pub fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut World) {
         }
 
         if !map.blocked[destination_idx] {
-            pos.x = min(79, max(0, pos.x + delta_x));
-            pos.y = min(49, max(0, pos.y + delta_y));
+            pos.x = (pos.x + delta_x).clamp(0, 79);
+            pos.y = (pos.y + delta_y).clamp(0, 49);
 
             // @くんが移動したら視界が変わるからdirtyふらぐもtrueにする
             viewshed.dirty = true;
@@ -130,7 +129,7 @@ fn get_item(ecs: &mut World) {
                     *player_entity,
                     WantsToPickupItem {
                         collected_by: *player_entity,
-                        item: item,
+                        item,
                     },
                 )
                 .expect("Unable to insert want to pickup");

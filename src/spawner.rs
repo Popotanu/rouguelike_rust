@@ -63,7 +63,7 @@ fn monster<S: ToString>(ecs: &mut World, x: i32, y: i32, glyph: rltk::FontCharTy
     ecs.create_entity()
         .with(Position { x, y })
         .with(Renderable {
-            glyph: glyph,
+            glyph,
             fg: RGB::named(rltk::RED),
             bg: RGB::named(rltk::BLACK),
             render_order: 1,
