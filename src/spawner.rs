@@ -3,7 +3,7 @@ use super::{
     Renderable, Viewshed,
 };
 use rltk::{RandomNumberGenerator, RGB};
-use specs::{prelude::*, rayon::iter::MapWith};
+use specs::prelude::*;
 
 const MAX_MONSTERS: i32 = 4;
 const MAX_ITEMS: i32 = 2;

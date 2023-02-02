@@ -1,8 +1,6 @@
-use crate::{player, WantsToDropItem};
-
 use super::{
     gamelog::GameLog, CombatStats, InBackpack, Name, Position, Potion, WantsToDrinkPortion,
-    WantsToPickupItem,
+    WantsToDropItem, WantsToPickupItem,
 };
 use specs::prelude::*;
 

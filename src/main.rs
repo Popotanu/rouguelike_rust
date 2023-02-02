@@ -1,4 +1,4 @@
-use rltk::{GameState, Point, Rltk, RGB};
+use rltk::{GameState, Point, Rltk};
 use specs::prelude::*;
 
 // ルートファイル(このプロジェクトではmain.rs)内で読み込むファイルを書かないといけない
@@ -205,7 +205,7 @@ fn main() -> rltk::BError {
     // skip(1) で最初の部屋にはmob配置しないようにする
     // playerが配置されるから
     for room in map.rooms.iter().skip(1) {
-        let (x, y) = room.center();
+        let (_x, _y) = room.center();
         spawner::spawn_room(&mut gs.ecs, room);
     }
     gs.ecs.insert(map);

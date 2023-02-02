@@ -1,5 +1,3 @@
-use crate::player;
-
 use super::{gamelog::GameLog, CombatStats, InBackpack, Map, Name, Player, Position, State};
 use rltk::{Point, Rltk, VirtualKeyCode, RGB};
 use specs::prelude::*;
