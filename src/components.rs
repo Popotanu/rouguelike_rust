@@ -13,6 +13,7 @@ pub struct Renderable {
     pub glyph: rltk::FontCharType, // @さんとか
     pub fg: RGB,                   // foreground
     pub bg: RGB,                   // background
+    pub render_order: i32,
 }
 
 #[derive(Component, Debug)]
