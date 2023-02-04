@@ -26,7 +26,7 @@ use gui::*;
 mod gamelog;
 mod inventory_system;
 mod spawner;
-use inventory_system::{ItemCollectionSystem, ItemDropSystem, PotionUseSystem};
+use inventory_system::{ItemCollectionSystem, ItemDropSystem, ItemUseSystem};
 
 // 待ち状態(相手のターン) or 自分のターン
 #[derive(PartialEq, Copy, Clone, Debug)]
@@ -37,6 +37,7 @@ pub enum RunState {
     MonsterTurn,
     ShowInventory,
     ShowDrpoItem,
+    ShowTargeting { range: i32, item: Entity },
 }
 pub struct State {
     ecs: World,
@@ -56,7 +57,7 @@ impl State {
         damage_system.run_now(&self.ecs);
         let mut pickup_system = ItemCollectionSystem {};
         pickup_system.run_now(&self.ecs);
-        let mut potions_system = PotionUseSystem {};
+        let mut potions_system = ItemUseSystem {};
         potions_system.run_now(&self.ecs);
         let mut drop_items = ItemDropSystem {};
         drop_items.run_now(&self.ecs);
@@ -106,16 +107,27 @@ impl GameState for State {
                     gui::ItemMenuResult::NoResponse => {}
                     gui::ItemMenuResult::Selected => {
                         let item_entity = result.1.unwrap();
-                        let mut intent = self.ecs.write_storage::<WantsToDrinkPortion>();
-                        intent
-                            .insert(
-                                *self.ecs.fetch::<Entity>(),
-                                WantsToDrinkPortion {
-                                    potion: item_entity,
-                                },
-                            )
-                            .expect("Uneable to insert intent");
-                        newrunstate = RunState::PlayerTurn;
+                        let is_ranged = self.ecs.read_storage::<Ranged>();
+                        let is_item_ranged = is_ranged.get(item_entity);
+
+                        if let Some(is_item_ranged) = is_item_ranged {
+                            newrunstate = RunState::ShowTargeting {
+                                range: is_item_ranged.range,
+                                item: item_entity,
+                            };
+                        } else {
+                            let mut intent = self.ecs.write_storage::<WantsToUseItem>();
+                            intent
+                                .insert(
+                                    *self.ecs.fetch::<Entity>(),
+                                    WantsToUseItem {
+                                        item: item_entity,
+                                        target: None,
+                                    },
+                                )
+                                .expect("Uneable to insert intent");
+                            newrunstate = RunState::PlayerTurn;
+                        }
                     }
                 }
             }
@@ -134,6 +146,27 @@ impl GameState for State {
                             )
                             .expect("Unable to insert intent");
 
+                        newrunstate = RunState::PlayerTurn;
+                    }
+                }
+            }
+            RunState::ShowTargeting { range, item } => {
+                let result = gui::ranged_target(self, ctx, range);
+                match result.0 {
+                    // 範囲外クリックとか選択キャンセルとかしたら再度playerの入力待ちに戻る
+                    gui::ItemMenuResult::Cancel => newrunstate = RunState::AwaitingInput,
+                    gui::ItemMenuResult::NoResponse => {}
+                    gui::ItemMenuResult::Selected => {
+                        let mut intent = self.ecs.write_storage::<WantsToUseItem>();
+                        intent
+                            .insert(
+                                *self.ecs.fetch::<Entity>(),
+                                WantsToUseItem {
+                                    item,
+                                    target: result.1,
+                                },
+                            )
+                            .expect("Unable to insert intent");
                         newrunstate = RunState::PlayerTurn;
                     }
                 }
@@ -187,11 +220,17 @@ fn main() -> rltk::BError {
         entries: vec!["Welcome to Rusty Roguelike".to_string()],
     });
     gs.ecs.register::<Item>();
-    gs.ecs.register::<Potion>();
+    gs.ecs.register::<ProvidesHealing>();
     gs.ecs.register::<InBackpack>();
     gs.ecs.register::<WantsToPickupItem>();
-    gs.ecs.register::<WantsToDrinkPortion>();
+    gs.ecs.register::<WantsToUseItem>();
     gs.ecs.register::<WantsToDropItem>();
+    gs.ecs.register::<Consumable>();
+    gs.ecs.register::<ProvideHealing>();
+    gs.ecs.register::<Ranged>();
+    gs.ecs.register::<InflictsDamage>();
+    gs.ecs.register::<AreaOfEffect>();
+    gs.ecs.register::<Confusion>();
 
     let map: Map = Map::new_map_rooms_and_corridors();
     let (player_x, player_y) = map.rooms[0].center();
