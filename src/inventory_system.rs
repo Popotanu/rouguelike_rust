@@ -92,16 +92,6 @@ impl<'a> System<'a> for ItemUseSystem {
                             healer.heal_amount
                         ));
                     }
-
-                    let consumable = consumables.get(useitem.item);
-                    match consumable {
-                        None => {}
-                        Some(_) => {
-                            entities
-                                .delete(useitem.item)
-                                .expect("Delete useitem failed");
-                        }
-                    }
                 }
             }
 
@@ -126,6 +116,18 @@ impl<'a> System<'a> for ItemUseSystem {
                         }
 
                         used_item = true;
+                    }
+                }
+            }
+
+            if used_item {
+                let consumable = consumables.get(useitem.item);
+                match consumable {
+                    None => {}
+                    Some(_) => {
+                        entities
+                            .delete(useitem.item)
+                            .expect("Delete useitem failed");
                     }
                 }
             }
