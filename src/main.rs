@@ -26,7 +26,7 @@ use gui::*;
 mod gamelog;
 mod inventory_system;
 mod spawner;
-use inventory_system::{ItemCollectionSystem, ItemDropSystem, PotionUseSystem};
+use inventory_system::{ItemCollectionSystem, ItemDropSystem, ItemUseSystem};
 
 // 待ち状態(相手のターン) or 自分のターン
 #[derive(PartialEq, Copy, Clone, Debug)]
@@ -56,7 +56,7 @@ impl State {
         damage_system.run_now(&self.ecs);
         let mut pickup_system = ItemCollectionSystem {};
         pickup_system.run_now(&self.ecs);
-        let mut potions_system = PotionUseSystem {};
+        let mut potions_system = ItemUseSystem {};
         potions_system.run_now(&self.ecs);
         let mut drop_items = ItemDropSystem {};
         drop_items.run_now(&self.ecs);
@@ -106,13 +106,11 @@ impl GameState for State {
                     gui::ItemMenuResult::NoResponse => {}
                     gui::ItemMenuResult::Selected => {
                         let item_entity = result.1.unwrap();
-                        let mut intent = self.ecs.write_storage::<WantsToDrinkPortion>();
+                        let mut intent = self.ecs.write_storage::<WantsToUseItem>();
                         intent
                             .insert(
                                 *self.ecs.fetch::<Entity>(),
-                                WantsToDrinkPortion {
-                                    potion: item_entity,
-                                },
+                                WantsToUseItem { item: item_entity },
                             )
                             .expect("Uneable to insert intent");
                         newrunstate = RunState::PlayerTurn;
@@ -187,11 +185,13 @@ fn main() -> rltk::BError {
         entries: vec!["Welcome to Rusty Roguelike".to_string()],
     });
     gs.ecs.register::<Item>();
-    gs.ecs.register::<Potion>();
+    gs.ecs.register::<ProvidesHealing>();
     gs.ecs.register::<InBackpack>();
     gs.ecs.register::<WantsToPickupItem>();
-    gs.ecs.register::<WantsToDrinkPortion>();
+    gs.ecs.register::<WantsToUseItem>();
     gs.ecs.register::<WantsToDropItem>();
+    gs.ecs.register::<Consumable>();
+    gs.ecs.register::<ProvideHealing>();
 
     let map: Map = Map::new_map_rooms_and_corridors();
     let (player_x, player_y) = map.rooms[0].center();
