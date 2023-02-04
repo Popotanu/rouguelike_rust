@@ -78,7 +78,7 @@ impl<'a> System<'a> for ItemUseSystem {
             mut suffer_damage,
         ) = data;
 
-        for (entity, useitem, stats) in (&entities, &wants_use, &mut combat_stats).join() {
+        for (entity, useitem) in (&entities, &wants_use).join() {
             let mut used_item = true;
 
             // Targeting
@@ -120,13 +120,19 @@ impl<'a> System<'a> for ItemUseSystem {
             match item_heals {
                 None => {}
                 Some(healer) => {
-                    stats.hp = i32::min(stats.max_hp, stats.hp + healer.heal_amount);
-                    if entity == *player_entity {
-                        gamelog.entries.push(format!(
-                            "{} was drunk, healed by {} HP",
-                            names.get(useitem.item).unwrap().name,
-                            healer.heal_amount
-                        ));
+                    for target in targets.iter() {
+                        let stats = combat_stats.get_mut(*target);
+
+                        if let Some(stats) = stats {
+                            stats.hp = i32::min(stats.max_hp, stats.hp + healer.heal_amount);
+                            if entity == *player_entity {
+                                gamelog.entries.push(format!(
+                                    "{} was drunk, healed by {} HP",
+                                    names.get(useitem.item).unwrap().name,
+                                    healer.heal_amount
+                                ));
+                            }
+                        }
                     }
                 }
             }
@@ -136,11 +142,8 @@ impl<'a> System<'a> for ItemUseSystem {
             match item_damages {
                 None => {}
                 Some(damage) => {
-                    let target_point = useitem.target.unwrap();
-                    let idx = map.xy_idx(target_point.x, target_point.y);
                     used_item = false;
-
-                    for mob in map.tile_content[idx].iter() {
+                    for mob in targets.iter() {
                         SufferDamage::new_damage(&mut suffer_damage, *mob, damage.damage);
                         if entity == *player_entity {
                             let mob_name = names.get(*mob).unwrap();

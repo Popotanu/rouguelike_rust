@@ -1,6 +1,6 @@
 use super::{
-    map::MAPWIDTH, AreaOfEffect, BlocksTile, CombatStats, Consumable, InflictsDamage, Item,
-    Monster, Name, Player, Position, ProvidesHealing, Ranged, Rect, Renderable, Viewshed,
+    map::MAPWIDTH, AreaOfEffect, BlocksTile, CombatStats, Confusion, Consumable, InflictsDamage,
+    Item, Monster, Name, Player, Position, ProvidesHealing, Ranged, Rect, Renderable, Viewshed,
 };
 use rltk::{RandomNumberGenerator, RGB};
 use specs::prelude::*;
@@ -60,6 +60,7 @@ pub fn random_item(ecs: &mut World, x: i32, y: i32) {
     match roll {
         1 => health_potion(ecs, x, y),
         2 => fireball_scroll(ecs, x, y),
+        3 => confusion_scroll(ecs, x, y),
         _ => magic_missile_scroll(ecs, x, y),
     }
 }
@@ -153,6 +154,25 @@ fn fireball_scroll(ecs: &mut World, x: i32, y: i32) {
         .with(Ranged { range: 6 })
         .with(InflictsDamage { damage: 20 })
         .with(AreaOfEffect { radius: 3 })
+        .build();
+}
+
+fn confusion_scroll(ecs: &mut World, x: i32, y: i32) {
+    ecs.create_entity()
+        .with(Position { x, y })
+        .with(Renderable {
+            glyph: rltk::to_cp437(')'),
+            fg: RGB::named(rltk::PINK),
+            bg: RGB::named(rltk::BLACK),
+            render_order: 2,
+        })
+        .with(Name {
+            name: "Confusion Scroll".to_string(),
+        })
+        .with(Item {})
+        .with(Consumable {})
+        .with(Ranged { range: 6 })
+        .with(Confusion { turns: 4 })
         .build();
 }
 
