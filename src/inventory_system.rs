@@ -1,6 +1,6 @@
 use super::{
-    gamelog::GameLog, CombatStats, Consumable, InBackpack, InflictsDamage, Map, Name, Position,
-    ProvidesHealing, SufferDamage, WantsToDropItem, WantsToPickupItem, WantsToUseItem,
+    gamelog::GameLog, AreaOfEffect, CombatStats, Consumable, InBackpack, InflictsDamage, Map, Name,
+    Position, ProvidesHealing, SufferDamage, WantsToDropItem, WantsToPickupItem, WantsToUseItem,
 };
 use specs::prelude::*;
 
@@ -57,6 +57,7 @@ impl<'a> System<'a> for ItemUseSystem {
         ReadStorage<'a, ProvidesHealing>,
         ReadStorage<'a, InflictsDamage>,
         ReadStorage<'a, Consumable>,
+        ReadStorage<'a, AreaOfEffect>,
         WriteStorage<'a, CombatStats>,
         WriteStorage<'a, SufferDamage>,
     );
@@ -72,12 +73,47 @@ impl<'a> System<'a> for ItemUseSystem {
             healing,
             inflict_damage,
             consumables,
+            aoe,
             mut combat_stats,
             mut suffer_damage,
         ) = data;
 
         for (entity, useitem, stats) in (&entities, &wants_use, &mut combat_stats).join() {
             let mut used_item = true;
+
+            // Targeting
+            let mut targets: Vec<Entity> = Vec::new();
+            match useitem.target {
+                // 対象を取らないアイテムはプレイヤーに適用する
+                None => targets.push(*player_entity),
+                Some(target) => {
+                    let area_effect = aoe.get(useitem.item);
+                    match area_effect {
+                        None => {
+                            // 単体攻撃
+                            let idx = map.xy_idx(target.x, target.y);
+                            for mob in map.tile_content[idx].iter() {
+                                targets.push(*mob);
+                            }
+                        }
+                        Some(area_effect) => {
+                            // aoe
+                            let mut blast_tiles =
+                                rltk::field_of_view(target, area_effect.radius, &*map);
+                            blast_tiles.retain(|p| {
+                                p.x > 0 && p.x < map.width - 1 && p.y > 0 && p.y < map.height - 1
+                            });
+
+                            for tile_idx in blast_tiles.iter() {
+                                let idx = map.xy_idx(tile_idx.x, tile_idx.y);
+                                for mob in map.tile_content[idx].iter() {
+                                    targets.push(*mob);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
 
             // かいふく
             let item_heals = healing.get(useitem.item);
@@ -97,7 +133,6 @@ impl<'a> System<'a> for ItemUseSystem {
 
             // ダメージを与えるアイテムならば, ターゲットしたセルに存在するmobに効果を適用する
             let item_damages = inflict_damage.get(useitem.item);
-            println!("{:?}", item_damages);
             match item_damages {
                 None => {}
                 Some(damage) => {
