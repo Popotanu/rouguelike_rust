@@ -95,8 +95,9 @@ impl<'a> System<'a> for ItemUseSystem {
                 }
             }
 
-            // ダメージを与えるアイテムならば, ターゲットしたセルに効果を適用する
+            // ダメージを与えるアイテムならば, ターゲットしたセルに存在するmobに効果を適用する
             let item_damages = inflict_damage.get(useitem.item);
+            println!("{:?}", item_damages);
             match item_damages {
                 None => {}
                 Some(damage) => {

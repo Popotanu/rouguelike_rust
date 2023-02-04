@@ -1,3 +1,7 @@
+use std::convert::Infallible;
+
+use crate::InflictsDamage;
+
 use super::{
     map::MAPWIDTH, BlocksTile, CombatStats, Consumable, Item, Monster, Name, Player, Position,
     ProvidesHealing, Ranged, Rect, Renderable, Viewshed,
@@ -131,6 +135,7 @@ fn magic_missile_scroll(ecs: &mut World, x: i32, y: i32) {
         .with(Item {})
         .with(Consumable {})
         .with(Ranged { range: 6 })
+        .with(InflictsDamage { damage: 8 })
         .build();
 }
 
