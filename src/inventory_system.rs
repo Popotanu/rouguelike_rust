@@ -66,7 +66,7 @@ impl<'a> System<'a> for ItemUseSystem {
             mut wants_use,
             names,
             healing,
-            mut consumables,
+            consumables,
             mut combat_stats,
         ) = data;
 
