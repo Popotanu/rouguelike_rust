@@ -390,3 +390,22 @@ pub fn ranged_target(
 
     (ItemMenuResult::NoResponse, None)
 }
+
+#[derive(PartialEq, Copy, Clone, Debug)]
+pub enum MainMenuSelection {
+    NewGame,
+    LoadGame,
+    Quit,
+}
+
+#[derive(PartialEq, Copy, Clone)]
+pub enum MainMenuResult {
+    NoSelection { selected: MainMenuSelection },
+    Selected { selected: MainMenuSelection },
+}
+
+pub fn main_menu(gs: &mut State, ctx: &mut Rltk) -> MainMenuResult {
+    MainMenuResult::NoSelection {
+        selected: MainMenuSelection::NewGame,
+    }
+}
