@@ -246,7 +246,6 @@ fn main() -> rltk::BError {
     gs.ecs.register::<CombatStats>();
     gs.ecs.register::<SufferDamage>();
     gs.ecs.register::<WantsToMelee>();
-    gs.ecs.insert(RunState::PreRun);
     gs.ecs.insert(gamelog::GameLog {
         entries: vec!["Welcome to Rusty Roguelike".to_string()],
     });
@@ -283,6 +282,9 @@ fn main() -> rltk::BError {
     gs.ecs.insert(Point::new(player_x, player_y));
     // plyaerのentityをecsに登録して,かんたんに参照できるようにする
     gs.ecs.insert(player_entity);
+    gs.ecs.insert(RunState::MainMenu {
+        menu_selection: gui::MainMenuSelection::NewGame,
+    });
 
     rltk::main_loop(context, gs)
 }
