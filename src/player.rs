@@ -96,6 +96,9 @@ pub fn player_input(gs: &mut State, ctx: &mut Rltk) -> RunState {
 
             VirtualKeyCode::D => return RunState::ShowDrpoItem,
 
+            // save and quit
+            VirtualKeyCode::Escape => return RunState::SaveGame,
+
             // 無効なキーが押されたときは入力を捨てて再度playerのターンにする
             _ => return RunState::AwaitingInput,
         },
